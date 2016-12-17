@@ -1,0 +1,10 @@
+[
+    {
+        "id": "test1@gmail.com",
+        "pwd": "password1"
+    },
+    {
+        "id": "test2@gmail.com",
+        "pwd": "password2"
+    }
+]
