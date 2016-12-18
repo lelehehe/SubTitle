@@ -1,10 +1,18 @@
 [
     {
-        "id": "test1@gmail.com",
-        "pwd": "password1"
+        "id": "vapworksmart@mailinator.com",
+        "pwd": "Password14"
     },
     {
-        "id": "test2@gmail.com",
-        "pwd": "password2"
-    }
+        "id": "worksmarttest1@mailinator.com",
+        "pwd": "Password11"
+    },
+    {
+        "id": "vwstest1@mailinator.com",
+        "pwd": "Password13"
+    },
+    {
+        "id": "vwstest2@mailinator.com",
+        "pwd": "Password11"
+    }        
 ]
