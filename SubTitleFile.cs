@@ -29,15 +29,17 @@ namespace SubTitleApp
             bool transformStarted = false;
             float span = 0;
             while (i < chsLines.Length) {
+                while (i < chsLines.Length && (chsLines[i].Length == 0 || !chsLines[i].StartsWith("Dialogue:"))) {
+                    i++;
+                } 
+
                 if (chsLines[i].ToUpper().Contains(engBlock[2].ToUpper())) {
                     transformStarted = true;
-                    GetTimeStamps(engBlock, ref start, ref end);
+                    GetEngTimeStamps(engBlock, ref start, ref end);
                     chsLines[i] = ReplaceTimeStamps(chsLines[i], start, end);
-                    if (!enumerator.MoveNext()) break;
-                    engBlock = enumerator.Current;
                     //Console.WriteLine(chsLines[i]);
                 }
-                else if (i < chsLines.Length - 1 && twoChsInOneBlock(chsLines[i], chsLines[i+1], engBlock)) {
+                else if ((i < chsLines.Length - 1) && twoChsInOneBlock(chsLines[i], chsLines[i+1], engBlock)) {
                     //62
                     // 00:05:49,912 --> 00:05:53,815
                     // The difference is our costs are
@@ -46,9 +48,9 @@ namespace SubTitleApp
                     // Dialogue: 0,0:06:05.81,0:06:07.15,*Default,NTP,0,0,0,,区别在于  我们的收费\N{\fn微软雅黑\fs14}The difference is our costs
                     // Dialogue: 0,0:06:07.15,0:06:09.37,*Default,NTP,0,0,0,,是明码标价挂在门前的\N{\fn微软雅黑\fs14}are fixed and posted right there on the door.
                     transformStarted = true;
-                    GetTimeStamps(engBlock, ref start, ref end);
-                    GetTimeSpan(chsLines[i], span);
-                    mid = GetTimeMid(start, span);
+                    GetEngTimeStamps(engBlock, ref start, ref end);
+                    var ts = GetChsTimeSpan(chsLines[i]);
+                    mid = GetTimeMid(start, ts);
                     chsLines[i] = ReplaceTimeStamps(chsLines[i], start, mid);
                     chsLines[i+1] = ReplaceTimeStamps(chsLines[i+1], mid, end);
                     i++;
@@ -57,26 +59,25 @@ namespace SubTitleApp
                     Console.WriteLine(chsLines[i]);
                     Console.WriteLine(engBlock[2]);
                 }
+                if (!enumerator.MoveNext()) break;
+                engBlock = enumerator.Current;
                 i++;
             }
             File.WriteAllLines(resultFile, chsLines);
         }
 
-        private string GetTimeMid(string start, float span)
+        private string GetTimeMid(string start, TimeSpan span)
         {
-            throw new NotImplementedException();
-        }
-
-        private void GetTimeSpan(string v, float span)
-        {
-            throw new NotImplementedException();
+            DateTime dt = DateTime.Parse(start);
+            DateTime mid = dt + span;
+            return string.Format("{0:H:mm:ss:ff}", mid);
         }
 
         private bool twoChsInOneBlock(string line1, string line2, List<string> engBlock)
         {
             if (engBlock.Count < 4) return false;
-            if (!engBlock[2].ToUpper().Contains(getEngContent(line1))) return false;
-            if (!engBlock[2].ToUpper().Contains(getEngContent(line1))) return false;
+            if (!engBlock[2].ToUpper().Contains(getEngContent(line1).ToUpper())) return false;
+            if (!engBlock[2].ToUpper().Contains(getEngContent(line1).ToUpper())) return false;
             return true;
         }
 
@@ -88,12 +89,21 @@ namespace SubTitleApp
 
         private string ReplaceTimeStamps(string line, string start, string end)
         {
-            var pos = line.IndexOf(',');
-            var length = 21;
-            return line.Substring(0, pos) + start + "," + end + line.Substring(pos + length);
+            var items = line.Split(',');
+            items[1] = start;
+            items[2] = end;
+            return string.Join(",", items);
         }
 
-        private void GetTimeStamps(List<string> engBlock, ref string start, ref string end)
+        private TimeSpan GetChsTimeSpan(string line) 
+        {
+            var parts = line.Split(',');
+            DateTime t1 = DateTime.Parse(parts[1]); 
+            DateTime t2 = DateTime.Parse(parts[2]); 
+            return t2 - t1;
+        }
+
+        private void GetEngTimeStamps(List<string> engBlock, ref string start, ref string end)
         {
             var timeItems = engBlock[1].Split(null);
             start= TimeConsolidate(timeItems[0]);
