@@ -13,7 +13,7 @@ namespace SubTitleApp
 
         public SubTitleFile(string sourcePath, string engFile, string chsFile, string resultPath)
         {
-            sourcePath = sourcePath;
+            this.sourcePath = sourcePath;
             englishSrc = sourcePath + "\\" + engFile;
             chineseSrc = sourcePath + "\\" + chsFile;
             resultFile = resultPath + "\\" + chsFile;
@@ -27,7 +27,7 @@ namespace SubTitleApp
             var engBlock = enumerator.Current;
             string start = null, end = null, mid = null;
             bool transformStarted = false;
-            float span;
+            float span = 0;
             while (i < chsLines.Length) {
                 if (chsLines[i].ToUpper().Contains(engBlock[2].ToUpper())) {
                     transformStarted = true;
