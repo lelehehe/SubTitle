@@ -32,14 +32,9 @@ namespace SubTitleApp
                 while (i < chsLines.Length && (chsLines[i].Length == 0 || !chsLines[i].StartsWith("Dialogue:"))) {
                     i++;
                 } 
-
-                if (chsLines[i].ToUpper().Contains(engBlock[2].ToUpper())) {
-                    transformStarted = true;
-                    GetEngTimeStamps(engBlock, ref start, ref end);
-                    chsLines[i] = ReplaceTimeStamps(chsLines[i], start, end);
-                    //Console.WriteLine(chsLines[i]);
-                }
-                else if ((i < chsLines.Length - 1) && twoChsInOneBlock(chsLines[i], chsLines[i+1], engBlock)) {
+                var chsUpper = chsLines[i].ToUpper(); 
+                var engUpper = engBlock[2].ToUpper();
+                if ((i < chsLines.Length - 1) && twoChsInOneBlock(chsLines[i], chsLines[i+1], engBlock)) {
                     //62
                     // 00:05:49,912 --> 00:05:53,815
                     // The difference is our costs are
@@ -54,12 +49,40 @@ namespace SubTitleApp
                     chsLines[i] = ReplaceTimeStamps(chsLines[i], start, mid);
                     chsLines[i+1] = ReplaceTimeStamps(chsLines[i+1], mid, end);
                     i++;
+                    if (!enumerator.MoveNext()) break;
+                }
+                else if (chsUpper.Contains(engUpper) || engUpper.Contains(chsUpper) ) {
+                    transformStarted = true;
+                    GetEngTimeStamps(engBlock, ref start, ref end);
+                    chsLines[i] = ReplaceTimeStamps(chsLines[i], start, end);
+                    if (!enumerator.MoveNext()) break;
                 }
                 else if (transformStarted) {
-                    Console.WriteLine(chsLines[i]);
-                    Console.WriteLine(engBlock[2]);
+                    chsUpper = chsLines[i+1].ToUpper(); 
+                    if (chsUpper.Contains(engUpper)) {
+                        //this line doesn't exist in eng version, remove it.
+                        // Dialogue: 0,0:18:53.52,0:18:54.65,*Default,NTP,0,0,0,,否则他们就是我的\N{\fn微软雅黑\fs14}Then they're mine.
+                        // Dialogue: 0,0:19:13.07,0:19:13.44,*Default,NTP,0,0,0,,{\an8\fn方正黑体_GBK\fs18\b1\bord1\shad1\3c&H2F2F2F&}地下83层
+                        // Dialogue: 0,0:19:18.60,0:19:20.79,*Default,NTP,0,0,0,,制冷系统已经坏了几周了\N{\fn微软雅黑\fs14}Cooling system's been down for weeks.
+                        // 211
+                        // 00:18:06,453 --> 00:18:08,307
+                        // Then they're mine.
+
+                        // 212
+                        // 00:18:30,517 --> 00:18:33,267
+                        // Cooling system's been down for weeks.
+
+                        chsLines[i] = string.Empty;
+                    }
+                    else if (!engUpper.Contains(chsUpper)) {
+                        //not in chs lines
+                        if (!enumerator.MoveNext()) break;
+                        i --; //stay chs cursor
+                    }
+                    else {
+                        Console.WriteLine("something wrong, i=%1, eng=%2, chs=%3", i, engBlock[2], chsLines[i]);
+                    }
                 }
-                if (!enumerator.MoveNext()) break;
                 engBlock = enumerator.Current;
                 i++;
             }
